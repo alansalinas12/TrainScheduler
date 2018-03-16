@@ -1,76 +1,78 @@
-(function() {
-    
-    var trainName;
-    var trainDestination;
-    var trainFirst;
-    var trainFrequency;
-    var nextArrival;
-    var minutesAway;
+(function () {
 
-    
-    var database = firebase.database();
+        var trainName;
+        var trainDestination;
+        var trainFirst;
+        var trainFrequency;
+        var nextArrival;
+        var minutesAway;
+        var key;
 
-    function clearInput() {
-        $("#train-name-input").val("");
-        $("#destination-input").val("");
-        $("#first-train-input").val("");
-        $("#frequency-input").val("");
-    }
+        var database = firebase.database();
 
-    $("#add-train-btn").on("submit", function (event) {
-        event.preventDefault();
+        function clearInput() {
+            $("#train-name-input").val("");
+            $("#destination-input").val("");
+            $("#first-train-input").val("");
+            $("#frequency-input").val("");
+        }
 
-        trainName = $("#train-name-input").val().trim();
-        trainDestination = $("#destination-input").val().trim();
-        trainFirst = $("#first-train-input").val().trim();
-        trainFrequency = $("#frequency-input").val().trim();
+        $("#add-train-btn").on("click", function (event) {
+            event.preventDefault();
 
-        var newTrain = {
-            name: trainName,
-            destination: trainDestination,
-            start: trainFirst,
-            frequency: trainFrequency,
-            dateAdded: firebase.database.ServerValue.TIMESTAMP
-        };
+            trainName = $("#train-name-input").val().trim();
+            trainDestination = $("#destination-input").val().trim();
+            trainFirst = $("#first-train-input").val().trim();
+            trainFrequency = $("#frequency-input").val().trim();
 
-        database.ref(trains).push(newTrain);
+            var newTrain = {
+                name: trainName,
+                destination: trainDestination,
+                start: trainFirst,
+                frequency: trainFrequency,
+                dateAdded: firebase.database.ServerValue.TIMESTAMP
+            };
 
-        clearInput();
-    });
+            database.ref("trains/").push(newTrain);
 
-    database.ref(trains)
-        .orderByChild("dateAdded")
-        .on("child_added", function (snapshot) {
+            clearInput();
+        });
 
-            var sv = snapshot.val();
-            
+        database.ref("trains/")
+            .orderByChild("dateAdded")
+            .on("child_added", function (snapshot) {
 
-            trainName = sv.name;
-            trainDestination = sv.destination;
-            trainFirst = sv.start;
-            trainFrequency = sv.frequency;
+                var sv = snapshot.val();
+                key = snapshot.key;
 
-            var firstTimeConverted = moment(trainFirst, "HH:mm").subtract(1, "years");
+                trainName = sv.name;
+                trainDestination = sv.destination;
+                trainFirst = sv.start;
+                trainFrequency = sv.frequency;
 
-            var currentTime = moment();
+                var firstTimeConverted = moment(trainFirst, "HH:mm").subtract(1, "years");
 
-            var diffTime = moment().diff(moment(firstTimeConverted), "minutes");
+                var currentTime = moment();
 
-            var remainder = diffTime % trainFrequency;
+                var diffTime = moment().diff(moment(firstTimeConverted), "minutes");
 
-            var minutesAway = trainFrequency - remainder;
+                var remainder = diffTime % trainFrequency;
 
-            var nextArrival = moment().add(minutesAway, "minutes").format("h:mm A");
+                minutesAway = trainFrequency - remainder;
 
-            var nameTab = $("<td>").text(trainName);
-            var destinationTab = $("<td>").text(trainDestination);
-            var frequencyTab = $("<td>").text(trainFrequency);
-            var nextTab = $("<td>").text(nextArrival);
-            var minutesTab = $("<td>").text(minutesAway);
+                nextArrival = moment().add(minutesAway, "minutes").format("h:mm A");
 
-            var newRow = $("<tr>").append(nameTab, destinationTab, frequencyTab, nextTab, minutesTab);
+                var nameTab = $("<td>").text(trainName);
+                var destinationTab = $("<td>").text(trainDestination);
+                var frequencyTab = $("<td>").text(trainFrequency);
+                var nextTab = $("<td>").text(nextArrival);
+                var minutesTab = $("<td>").text(minutesAway);
 
-            $("#trains").append(newRow);
-    });
-});
+                var newRow = $("<tr>").append(nameTab, destinationTab, frequencyTab, nextTab, minutesTab).attr("data-id", key);
+                console.log(newRow);
+                $("#train-body").append(newRow);
+            });
+    })();
+
+
 
